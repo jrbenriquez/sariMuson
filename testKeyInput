@@ -1,0 +1,10 @@
+import msvcrt
+
+while True:
+    if msvcrt.kbhit():
+        key = str(msvcrt.getch())[2:3]
+        print("Key pressed: " + key)
+        if key == "&":
+            return True
+        elif key == "!":
+            return False
