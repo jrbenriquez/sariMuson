@@ -7,7 +7,30 @@
 
 import datetime
 import os
-import winsound
+import simpleaudio as sa
+
+try:
+    from msvcrt import kbhit ,getch
+except ImportError:
+    import termios, fcntl, sys, os
+    def kbhit():
+        fd = sys.stdin.fileno()
+        oldterm = termios.tcgetattr(fd)
+        newattr = termios.tcgetattr(fd)
+        newattr[3] = newattr[3] & ~termios.ICANON & ~termios.ECHO
+        termios.tcsetattr(fd, termios.TCSANOW, newattr)
+        oldflags = fcntl.fcntl(fd, fcntl.F_GETFL)
+        fcntl.fcntl(fd, fcntl.F_SETFL, oldflags | os.O_NONBLOCK)
+        try:
+            while True:
+                try:
+                    c = sys.stdin.read(1)
+                    return True
+                except IOError:
+                    return True
+        finally:
+            termios.tcsetattr(fd, termios.TCSAFLUSH, oldterm)
+            fcntl.fcntl(fd, fcntl.F_SETFL, oldflags)
 
 def init():
     dateLaunch = str(datetime.date.today())   #Detect Date Today
@@ -58,37 +81,41 @@ class _GetchWindows:
 
     def __call__(self):
         import msvcrt
-        return msvcrt.getch()
+        return str(msvcrt.getch())[2:3]
 
 
 
 
 def soundCash():
-    winsound.PlaySound('sounds/cash.wav', winsound.SND_FILENAME)
+    wave_obj = sa.WaveObject.from_wave_file("sounds/cash.wav")
+    play_obj = wave_obj.play()
+    play_obj.wait_done()
 
 def soundSuccess():
-    winsound.PlaySound('sounds/success.wav', winsound.SND_FILENAME)
+    wave_obj = sa.WaveObject.from_wave_file("sounds/success.wav")
+    play_obj = wave_obj.play()
+    play_obj.wait_done()
 
 def soundError():
-    winsound.PlaySound('sounds/error.wav', winsound.SND_FILENAME)
+    wave_obj = sa.WaveObject.from_wave_file("sounds/error.wav")
+    play_obj = wave_obj.play()
+    play_obj.wait_done()
+
 def waitForKey():
     startChar = '+'
     stopChar = '!'
     while True:
-        key = _Getch()
-        print(key)
-        return True
-
-        '''if msvcrt.kbhit():
-            key = str(msvcrt.getch())[2:3]
-            if key in startChar:
+        if kbhit():
+            key = _Getch()
+            keyPressed = str(key())
+            if keyPressed in startChar:
                 soundCash()
                 return True
-            elif key == stopChar:
+            elif keyPressed == stopChar:
                 return False
             else:
-                print("Key pressed: " + key)
-                soundError()'''
+                print("Key pressed: " + keyPressed)
+                soundError()
 
 def monitorKeyboard():
     if waitForKey() is True:               #if START character is detected get input
@@ -140,6 +167,7 @@ def printTotal():
 
 
 #Start Program
+
 integers = "1234567890"
 runProgram = True
 workingFile = init()
