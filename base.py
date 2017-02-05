@@ -137,7 +137,9 @@ def monitorKeyboard():
         print("Stopping Program")
         return False
 
+
 def appendToLog(appendData):
+    appendData = appendData + "," + str(datetime.datetime.now().time())
     with open(workingFile, "a") as f:
         f.write(str(appendData) + "\n")
 
@@ -149,14 +151,16 @@ def cleanFile():
         if i != "\n":
             f.write(i)
     f.truncate()
+    f.close()
 
 def printTotal():
     cleanFlag = False
     priceAcc = 0
     with open(workingFile,"r+") as f:
         for line in f:
+            entryList = line.split(',')
             try:
-                priceAcc += int(line)
+                priceAcc += int(entryList[0])
             except ValueError:
                 print("An entry was null or invalid")
                 #Remove null entries
