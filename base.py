@@ -104,21 +104,41 @@ def soundError():
 def waitForKey():
     startChar = '+'
     stopChar = '!'
+    totalChar = '*'
+    minusChar = '/'
     while True:
         if kbhit():
             key = _Getch()
             keyPressed = str(key())
             if keyPressed in startChar:
-                soundCash()
                 return True
             elif keyPressed == stopChar:
                 return False
+            elif keyPressed == totalChar:
+                printTotal()
+            elif keyPressed == minusChar:
+                return "MINUS"
             else:
                 print("Key pressed: " + keyPressed)
                 soundError()
 
 def monitorKeyboard():
-    if waitForKey() is True:               #if START character is detected get input
+    if waitForKey() == "MINUS":
+        soundCash()
+        finalEntry = ""
+        salePrice = str(input("Price Deduct: "))
+        for i in salePrice:
+            if i in integers:
+                finalEntry += i
+        print("Deduct " + finalEntry + "php")
+        finalEntry = "-" + finalEntry
+        #Append to file
+        appendToLog(finalEntry)
+        printTotal()
+        soundSuccess()
+        return True
+    elif waitForKey() is True:               #if START character is detected get input
+        soundCash()
         finalSalesEntry = ""
         salePrice = str(input("Price Sold: "))
         #input verification - make sure only integer is passed
@@ -131,8 +151,6 @@ def monitorKeyboard():
         printTotal()
         soundSuccess()
         return True
-
-
     else:
         print("Stopping Program")
         return False
@@ -172,7 +190,7 @@ def printTotal():
 
 #Start Program
 
-integers = "1234567890"
+integers = "1234567890-"
 runProgram = True
 workingFile = init()
 
