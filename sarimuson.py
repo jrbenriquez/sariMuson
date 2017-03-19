@@ -3,7 +3,7 @@ import tkinter
 import datetime
 import os
 import simpleaudio as sa
-
+from functools import partial
 class sariMusonApp(tkinter.Tk):
     def __init__(self,parent):
         tkinter.Tk.__init__(self,parent)
@@ -11,17 +11,17 @@ class sariMusonApp(tkinter.Tk):
         self.initialize()
 
     def initialize(self):
-        self.minsize(width=600, height=250)
+        self.minsize(width=300, height=250)
         self.grid()
 
         self.entry = tkinter.Entry(self)
-        self.entry.grid(column=0,row=0,sticky='EW')
+        self.entry.grid(column=0,row=0,columnspan=2,sticky='EW')
         self.entry.bind("<KP_Enter>", self.OnPressEnter)
         self.entry.config(font=("Arial", 44))
         self.label = tkinter.Label(self,
                               anchor="w",fg="white",bg="blue")
         self.label.grid(column=0,row=4,columnspan=2,sticky='EW')
-        self.label.config(font=("Arial", 18))
+        self.label.config(font=("Arial", 18), justify="right")
         self.labelEvent = tkinter.Label(self,
                               anchor="w",fg="white",bg="red")
         self.labelEvent.grid(column=0,row=3,columnspan=2,sticky='EW')
@@ -34,8 +34,43 @@ class sariMusonApp(tkinter.Tk):
 
         self.labelMisc2 = tkinter.Label(self,
                               anchor="w",fg="black",bg="white")
-        self.labelMisc2.grid(column=0,row=1,columnspan=2,sticky='EW')
+        self.labelMisc2.grid(column=0,row=1,columnspan=3,sticky='EW')
         self.labelMisc2.config(font=("Arial", 44))
+        
+
+        self.totalEntry = tkinter.Entry(self)
+        self.totalEntry.grid(column=1,row=5,sticky='EW')
+        self.totalEntry.config(font=("Arial", 10))
+        self.totalEntry.bind("<Return>", self.getTotal)
+        self.totalEntry['text'] = "".join(str(datetime.date.today()))
+        self.labelDate = tkinter.Label(self,
+                              anchor="w",fg="black",bg=None)
+        self.labelDate.grid(column=0,row=5,columnspan=1,sticky='EW')
+        self.labelDate.config(font=("Arial", 10))
+        self.labelDate['text'] = "Enter Date - (yyyymmdd)"
+
+
+        self.labelTotal = tkinter.Label(self,
+                              anchor="w",fg="black",bg=None)
+        self.labelTotal.grid(column=0,row=6,columnspan=1,sticky='EW')
+        self.labelTotal.config(font=("Arial", 10))
+        self.buttonTotal = tkinter.Button ( self, command=self.getTotal, text="Get Total")
+        self.buttonTotal.grid(column=1,row=6,columnspan=1,sticky='EW')
+        
+        self.listHistory = tkinter.Listbox(self)
+        self.listHistory.grid(column=2,row=1,rowspan=3,sticky='EW')
+
+        self.scrollHistory = tkinter.Scrollbar(self, orient="vertical")
+        self.scrollHistory.config(command=self.listHistory.yview)
+        self.listHistory.config(yscrollcommand=self.scrollHistory.set)
+
+        self.listHistory.insert
+
+        self.labelHistory = tkinter.Label(self,
+                              anchor="w",fg="black",bg=None)
+        self.labelHistory.grid(column=2,row=0,sticky='EW')
+        self.labelHistory.config(font=("Arial", 10))
+        self.labelHistory['text'] = "History:"
         self.resizable(False,False)
 
     def addFunction(self,event=None):
@@ -48,6 +83,7 @@ class sariMusonApp(tkinter.Tk):
         self.entry.focus()
     def OnPressEnter(self,event):
         inputText = self.entry.get()
+        self.listHistory.insert(0,inputText)
         cleanInput = parseInput(inputText)
         print(inputText,cleanInput)
         self.entry.delete(0,'end')
@@ -61,9 +97,30 @@ class sariMusonApp(tkinter.Tk):
             appendToLog(cleanInput)
             self.labelEvent['text']= "Bawas: "+ cleanInput +" php"
         printTotal(self)
+            
 
         self.labelMisc['text'] = datetime.datetime.now().strftime('%I:%M:%S')
 
+        self.label.focus()
+        soundSuccess()
+    def getTotal(self,event):
+        dateVar = self.totalEntry.get()
+        print(dateVar)
+        cleanFlag = False
+        priceAcc = 0
+        with open("Transaction History/"+dateVar+".log","r+") as f:
+            for line in f:
+                entryList = line.split(',')
+                try:
+                    priceAcc += int(entryList[0])
+                    self.labelTotal['text']=""
+                except ValueError:
+                    self.labelTotal['text']="An entry was null or invalid"
+                    #Remove null entries
+                    cleanFlag = True
+        if cleanFlag is True:
+            cleanFile()    
+        self.labelTotal['text'] = str(priceAcc)
         self.label.focus()
 def parseInput(inputText):
     integers = "1234567890"
@@ -78,14 +135,14 @@ def init():
     fileName = "".join(dateLaunch)            #Create Filename from Date
 
     #Check if log exists
-    fileToday = os.path.isfile('./'+fileName+'.log')
+    fileToday = os.path.isfile('Transaction History/'+fileName+'.log')
 
     if fileToday is False:                      #If it does not exist
-        logFile = open(fileName+".log", "w")    #Create file
+        logFile = open("Transaction History/" +fileName+".log", "w")    #Create file
         logFile.close()
         print("File for the day not found. File created")
     print("Initialization Done")
-    return(fileName+".log")                     #return filename
+    return("Transaction History/" +fileName+".log")                     #return filename
 
 def soundCash(*event):
     print(event)
@@ -135,6 +192,7 @@ def printTotal(self):
     if cleanFlag is True:
         cleanFile()
     self.labelMisc2['text'] = "TOTAL:" + str(priceAcc) + " php"
+
 
 if __name__ == "__main__":
     workingFile = init()
